@@ -51,10 +51,17 @@ contract('ItemsStore', (accounts) => {
 
       const file = await readFileAsync('text.txt');
 
-      await storeContract.addFile('23', '20', 'test', 'js', 0, file.toString('hex'), {from: accounts[0]});
-      await storeContract.addFile('23', '20', 'test', 'js', 1, file.toString('hex'), {from: accounts[0]});
+      await storeContract.addFile('1-1-1', 'test', 'js', 0, file.toString('hex'), {from: accounts[0]});
 
-      const eventsAsync = () => new Promise((resolve, reject) => {
+      const info = await storeContract.getFileInfo.call('1-1-1', { from: accounts[0] });
+      console.log(info);
+      // await storeContract.addFile('1-1-1', '0.0.1', 'test', 'js', 1, file.toString('hex'), {from: accounts[0]});
+      //
+      // await storeContract.addFile('1-1-2', '0.0.1', 'test', 'js', 0, file.toString('hex'), {from: accounts[0]});
+      //
+      // await storeContract.addFileVersion('1-1-2', '0.2', 0, file.toString('hex'), {from: accounts[0]});
+      //
+      const addFileEvent = () => new Promise((resolve, reject) => {
         const myEvent = storeContract.SaveFile({}, { fromBlock: 0, toBlock: 'latest'});
 
         myEvent.watch();
@@ -63,14 +70,33 @@ contract('ItemsStore', (accounts) => {
           if (error) {
             reject(error);
           } else {
-            resolve(events);
+            resolve(events.map(block => block.args));
           }
         });
         myEvent.stopWatching();
-
       });
-      const filtered = await eventsAsync();
-      console.log(filtered.map(block => block.args));
+
+      const addVersionEvent = () => new Promise((resolve, reject) => {
+        const myEvent = storeContract.SaveFileVersion({}, { fromBlock: 0, toBlock: 'latest'});
+
+        myEvent.watch();
+
+        myEvent.get(function(error, events) {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(events.map(block => block.args));
+          }
+        });
+        myEvent.stopWatching();
+      });
+
+      // const addFile = await addFileEvent();
+      const addVersion = await addVersionEvent();
+      // console.log(addFile);
+      console.log(addVersion);
+      console.log(web3.toAscii(addVersion[0].version));
+
     });
   });
 
